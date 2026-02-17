@@ -45,7 +45,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (v_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   v_membership_status := public.loyalty_current_membership_status(v_customer_id, p_venue_id);
 
@@ -59,10 +59,10 @@ begin
     v_customer_id,
     p_venue_id,
     'unissued',
-    encode(gen_random_bytes(24), 'hex'),
-    format('pending:%s', encode(gen_random_bytes(8), 'hex'))
+    encode(extensions.gen_random_bytes(24), 'hex'),
+    format('pending:%s', encode(extensions.gen_random_bytes(8), 'hex'))
   )
-  on conflict (customer_id, venue_id, pass_type) do nothing;
+  on conflict on constraint passes_customer_id_venue_id_pass_type_key do nothing;
 
   select p.pass_token into v_wallet_token
   from public.passes p
@@ -121,7 +121,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (v_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   v_membership_status := public.loyalty_current_membership_status(v_customer_id, p_venue_id);
 
@@ -167,7 +167,7 @@ declare
 begin
   insert into public.customer_venues (customer_id, venue_id)
   values (p_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   v_membership_status := public.loyalty_current_membership_status(p_customer_id, p_venue_id);
 

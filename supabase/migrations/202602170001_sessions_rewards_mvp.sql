@@ -343,7 +343,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (v_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   v_membership_status := public.loyalty_current_membership_status(v_customer_id, p_venue_id);
 
@@ -357,10 +357,10 @@ begin
     v_customer_id,
     p_venue_id,
     'unissued',
-    encode(gen_random_bytes(24), 'hex'),
-    format('pending:%s', encode(gen_random_bytes(8), 'hex'))
+    encode(extensions.gen_random_bytes(24), 'hex'),
+    format('pending:%s', encode(extensions.gen_random_bytes(8), 'hex'))
   )
-  on conflict (customer_id, venue_id, pass_type) do nothing;
+  on conflict on constraint passes_customer_id_venue_id_pass_type_key do nothing;
 
   select p.pass_token into v_wallet_token
   from public.passes p
@@ -419,7 +419,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (v_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   v_membership_status := public.loyalty_current_membership_status(v_customer_id, p_venue_id);
 
@@ -465,7 +465,7 @@ declare
 begin
   insert into public.customer_venues (customer_id, venue_id)
   values (p_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   v_membership_status := public.loyalty_current_membership_status(p_customer_id, p_venue_id);
 
@@ -562,9 +562,9 @@ begin
   end if;
 
   if p_idempotency_key is not null then
-    select id, expires_at into v_hold_id, v_expires_at
-    from public.reward_holds
-    where idempotency_key = p_idempotency_key
+    select rh.id, rh.expires_at into v_hold_id, v_expires_at
+    from public.reward_holds rh
+    where rh.idempotency_key = p_idempotency_key
     limit 1;
 
     if v_hold_id is not null then
@@ -588,12 +588,12 @@ begin
     end if;
   end if;
 
-  select id, expires_at into v_hold_id, v_expires_at
-  from public.reward_holds
-  where cart_session_id = p_cart_session_id
-    and customer_id = p_customer_id
-    and venue_id = p_venue_id
-    and status = 'active'
+  select rh.id, rh.expires_at into v_hold_id, v_expires_at
+  from public.reward_holds rh
+  where rh.cart_session_id = p_cart_session_id
+    and rh.customer_id = p_customer_id
+    and rh.venue_id = p_venue_id
+    and rh.status = 'active'
   limit 1;
 
   if v_hold_id is not null then
@@ -618,7 +618,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (p_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   select rewards_balance into v_venue_rewards
   from public.customer_venues
@@ -629,7 +629,7 @@ begin
   if p_venue_id <> 'global' then
     insert into public.customer_venues (customer_id, venue_id)
     values (p_customer_id, 'global')
-    on conflict (customer_id, venue_id) do nothing;
+    on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
     select rewards_balance into v_global_rewards
     from public.customer_venues
@@ -792,7 +792,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (v_customer_id, p_venue_id)
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   select cv.points_balance, cv.rewards_balance
     into v_points_balance, v_rewards_balance
@@ -871,14 +871,14 @@ begin
     v_rewards_balance := v_rewards_balance + v_rewards_converted;
   end if;
 
-  update public.customer_venues
+  update public.customer_venues cv
   set
     points_balance = v_points_balance,
     rewards_balance = v_rewards_balance,
     membership_status = public.loyalty_current_membership_status(v_customer_id, p_venue_id),
     updated_at = now()
-  where customer_id = v_customer_id
-    and venue_id = p_venue_id;
+  where cv.customer_id = v_customer_id
+    and cv.venue_id = p_venue_id;
 
   insert into public.order_links (
     order_id,
@@ -1048,26 +1048,26 @@ begin
 
   v_source_rewards_balance := v_source_rewards_balance - v_reward_count;
 
-  update public.customer_venues
+  update public.customer_venues cv
   set
     rewards_balance = v_source_rewards_balance,
     membership_status = public.loyalty_current_membership_status(v_customer_id, v_source_venue_id),
     updated_at = now()
-  where customer_id = v_customer_id
-    and venue_id = v_source_venue_id;
+  where cv.customer_id = v_customer_id
+    and cv.venue_id = v_source_venue_id;
 
   update public.reward_holds
   set status = 'consumed', updated_at = now()
   where id = v_hold_id;
 
-  update public.order_links
+  update public.order_links ol
   set
     status = 'reward_redeemed',
-    customer_id = coalesce(customer_id, v_customer_id),
-    cart_session_id = coalesce(cart_session_id, v_cart_session_id),
+    customer_id = coalesce(ol.customer_id, v_customer_id),
+    cart_session_id = coalesce(ol.cart_session_id, v_cart_session_id),
     updated_at = now()
-  where order_id = p_order_id
-    and venue_id = p_venue_id;
+  where ol.order_id = p_order_id
+    and ol.venue_id = p_venue_id;
 
   select cv.rewards_balance into v_venue_rewards
   from public.customer_venues cv
@@ -1133,7 +1133,7 @@ begin
 
   insert into public.customer_venues (customer_id, venue_id)
   values (p_customer_id, coalesce(p_venue_id, 'global'))
-  on conflict (customer_id, venue_id) do nothing;
+  on conflict on constraint customer_venues_customer_id_venue_id_key do nothing;
 
   select rewards_balance
     into v_rewards_balance
