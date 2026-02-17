@@ -33,6 +33,11 @@ Implementation scaffold for the Sessions Rewards plan:
 - `GET /admin?venue_id=...`
 - `GET /membership?customer_id=...&venue_id=...` (redirects to Stripe hosted checkout)
   - Optional signed link guard via `MEMBERSHIP_LINK_SIGNING_SECRET` (`ts` + `sig` query params)
+- `GET /` Loyalty Card Studio (issue card, generate QR, send email, edit branding)
+- `POST /api/issue-card`
+- `POST /api/send-wallet-link` (optional, Resend)
+- `GET /api/card-branding?venue_id=...`
+- `POST /api/card-branding` (`x-admin-key` or `admin_key` required)
 
 ## Quick Start
 1. Copy `.env.example` to `.env` and set secrets.
@@ -53,6 +58,10 @@ Implementation scaffold for the Sessions Rewards plan:
 4. Deploy Vercel app from repo root.
 5. Configure Stripe webhook target:
    - `https://<your-vercel-domain>/loyalty/stripe-webhook`
+
+If you apply SQL manually in Supabase SQL Editor, run both:
+- `supabase/migrations/202602170004_consolidate_runtime_fixes.sql`
+- `supabase/migrations/202602170005_wallet_branding_table.sql`
 
 ## Auth Expectations
 - Kiosk endpoints: JWT via Sessions JWKS or `x-kiosk-secret` fallback.
@@ -93,6 +102,7 @@ export SUPABASE_URL="https://${SUPABASE_PROJECT_REF}.supabase.co"
 export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 export INTERNAL_API_KEY="change-me-internal"
 export KIOSK_SHARED_SECRET="change-me-kiosk"
+export ADMIN_API_KEY="change-me-admin"
 ./scripts/deploy-supabase-mvp.sh
 ```
 
@@ -121,6 +131,10 @@ Set required env vars in Supabase + Vercel:
 - `MEMBERSHIP_SUCCESS_URL`
 - `MEMBERSHIP_CANCEL_URL`
 
+Supabase note:
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are reserved runtime secrets for Edge Functions and cannot be set manually in Supabase Secrets.
+- Keep them configured in Vercel env vars.
+
 Smoke test:
 ```bash
 export LOYALTY_BASE_URL="https://sessions-loyalty-program-x1pp.vercel.app"
@@ -135,3 +149,9 @@ stripe listen --forward-to https://sessions-loyalty-program-x1pp.vercel.app/loya
 stripe trigger checkout.session.completed
 stripe trigger invoice.paid
 ```
+
+### Card Studio Email (Optional)
+Set in Vercel env:
+- `RESEND_API_KEY`
+- `EMAIL_FROM` (example `Sessions <noreply@yourdomain.com>`)
+- `WALLET_EMAIL_SUBJECT` (optional)

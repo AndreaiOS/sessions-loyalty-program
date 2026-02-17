@@ -29,8 +29,6 @@ done
 
 required_envs=(
   SUPABASE_PROJECT_REF
-  SUPABASE_URL
-  SUPABASE_SERVICE_ROLE_KEY
   INTERNAL_API_KEY
   KIOSK_SHARED_SECRET
 )
@@ -62,9 +60,9 @@ fi
 
 echo "==> Setting Edge Function secrets"
 # Optional secrets are set only when present.
+# NOTE: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are reserved in Supabase
+# Edge Functions and are injected automatically by the runtime.
 secret_args=(
-  "SUPABASE_URL=$SUPABASE_URL"
-  "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY"
   "INTERNAL_API_KEY=$INTERNAL_API_KEY"
   "KIOSK_SHARED_SECRET=$KIOSK_SHARED_SECRET"
   "DEFAULT_PHONE_COUNTRY_CODE=$DEFAULT_PHONE_COUNTRY_CODE"
