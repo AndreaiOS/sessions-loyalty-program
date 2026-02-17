@@ -1,4 +1,4 @@
-import { supabaseRest } from "../_lib/supabase-rest.js";
+import { supabaseRest } from "../../lib/server/supabase-rest.js";
 
 function escapeHtml(value) {
   return String(value)

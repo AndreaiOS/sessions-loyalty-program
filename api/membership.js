@@ -1,4 +1,4 @@
-import { proxyToEdge } from "./_lib/edge-proxy.js";
+import { proxyToEdge } from "../lib/server/edge-proxy.js";
 import crypto from "node:crypto";
 
 const proxyHandler = proxyToEdge("membership-checkout-create-session");
