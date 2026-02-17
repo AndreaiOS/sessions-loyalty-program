@@ -1,0 +1,9 @@
+project_id = "sessions-loyalty-program"
+
+[functions]
+enabled = true
+verify_jwt = false
+
+[db]
+shadow_port = 54320
+major_version = 15

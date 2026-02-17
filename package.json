@@ -1,0 +1,11 @@
+{
+  "name": "sessions-loyalty-program",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:unit": "node --test test/points.test.js",
+    "test:contract": "node --test test/order-payload.contract.test.js"
+  }
+}

@@ -1,2 +1,83 @@
-# sessions-loyalty-program
-sessions loyalty program
+# Sessions Rewards MVP (Kiosk + EPOS + Supabase + Vercel)
+
+Implementation scaffold for the Sessions Rewards plan:
+- Supabase Postgres schema + RLS + transactional RPC functions
+- Supabase Edge Functions for loyalty and membership logic
+- Vercel endpoints for kiosk-facing `/loyalty/*`, `/wallet/{token}`, and `/admin`
+- Test suite for points rules and order payload contract
+
+## Repository Structure
+- `supabase/migrations/202602170001_sessions_rewards_mvp.sql`: schema, indexes, RLS, SQL RPCs
+- `supabase/functions/*`: edge functions
+- `api/*`: Vercel endpoints and proxy routes
+- `src/lib/points.js`: points/membership calculation helpers
+- `test/*`: unit and contract tests
+- `docs/api-contracts.md`: request/response contracts for kiosk/webhook integration
+
+## Implemented Endpoints
+### Loyalty endpoints
+- `POST /loyalty/resolve-customer-from-pass-token`
+- `POST /loyalty/upsert-customer-by-phone`
+- `POST /loyalty/attach-customer-to-cart-session`
+- `POST /loyalty/get-balance`
+- `POST /loyalty/apply-reward-to-cart`
+- `POST /loyalty/earn-points-from-paid-order`
+- `POST /loyalty/redeem-reward-after-payment`
+- `POST /loyalty/membership-checkout-create-session`
+- `POST /loyalty/stripe-webhook`
+- `POST /loyalty/monthly-reward-grant-job`
+- `POST /loyalty/process-pass-update-jobs`
+
+### Public web endpoints
+- `GET /wallet/{token}`
+- `GET /admin?venue_id=...`
+- `GET /membership?customer_id=...&venue_id=...` (redirects to Stripe hosted checkout)
+  - Optional signed link guard via `MEMBERSHIP_LINK_SIGNING_SECRET` (`ts` + `sig` query params)
+
+## Quick Start
+1. Copy `.env.example` to `.env` and set secrets.
+2. Apply Supabase migration:
+   - `supabase db push`
+3. Deploy edge functions:
+   - `supabase functions deploy resolve-customer-from-pass-token`
+   - `supabase functions deploy upsert-customer-by-phone`
+   - `supabase functions deploy attach-customer-to-cart-session`
+   - `supabase functions deploy get-balance`
+   - `supabase functions deploy apply-reward-to-cart`
+   - `supabase functions deploy earn-points-from-paid-order`
+   - `supabase functions deploy redeem-reward-after-payment`
+   - `supabase functions deploy membership-checkout-create-session`
+   - `supabase functions deploy stripe-webhook-handler`
+   - `supabase functions deploy monthly-reward-grant-job`
+   - `supabase functions deploy process-pass-update-jobs`
+4. Deploy Vercel app from repo root.
+5. Configure Stripe webhook target:
+   - `https://<your-vercel-domain>/loyalty/stripe-webhook`
+
+## Auth Expectations
+- Kiosk endpoints: JWT via Sessions JWKS or `x-kiosk-secret` fallback.
+- Internal webhook/cron endpoints: `x-internal-api-key`.
+- Admin page: `x-admin-key`.
+
+## MVP Behavior Notes
+- Points: `floor(total_minor / currency_unit)` and membership `2x` multiplier.
+- Conversion: every 100 points auto-converts to 1 reward.
+- Redemption: reward hold on apply; consume only after payment confirmation.
+- Global membership monthly rewards are stored in a shared `global` balance and surfaced at venue checkout.
+- Idempotency: key-based dedupe in SQL ledger writes and redemption flows.
+- Wallet: `/wallet/{token}` page plus provider redirect templates.
+
+## Tests
+Run all:
+```bash
+npm test
+```
+Run specific suites:
+```bash
+npm run test:unit
+npm run test:contract
+```
+
+## Utility Scripts
+- `scripts/poll-paid-orders.js`: fallback paid-order polling worker.
+- `scripts/generate-membership-link.js`: creates signed `/membership` links.

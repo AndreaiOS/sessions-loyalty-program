@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/wallet/:token", "destination": "/api/wallet/:token" },
+    { "source": "/admin", "destination": "/api/admin" },
+    { "source": "/membership", "destination": "/api/membership" },
+    { "source": "/loyalty/:path*", "destination": "/api/loyalty/:path*" }
+  ]
+}
