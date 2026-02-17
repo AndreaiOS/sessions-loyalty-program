@@ -325,9 +325,9 @@ begin
     raise exception 'phone_hash_required';
   end if;
 
-  select id into v_customer_id
-  from public.customers
-  where phone_hash = p_phone_hash;
+  select c.id into v_customer_id
+  from public.customers c
+  where c.phone_hash = p_phone_hash;
 
   if v_customer_id is null then
     insert into public.customers (phone_e164, phone_hash)
@@ -336,9 +336,9 @@ begin
 
     v_inserted := true;
   else
-    update public.customers
-    set phone_e164 = coalesce(p_phone_e164, phone_e164)
-    where id = v_customer_id;
+    update public.customers c
+    set phone_e164 = coalesce(p_phone_e164, c.phone_e164)
+    where c.id = v_customer_id;
   end if;
 
   insert into public.customer_venues (customer_id, venue_id)
@@ -347,10 +347,10 @@ begin
 
   v_membership_status := public.loyalty_current_membership_status(v_customer_id, p_venue_id);
 
-  update public.customer_venues
+  update public.customer_venues cv
   set membership_status = v_membership_status
-  where customer_id = v_customer_id
-    and venue_id = p_venue_id;
+  where cv.customer_id = v_customer_id
+    and cv.venue_id = p_venue_id;
 
   insert into public.passes (customer_id, venue_id, pass_type, pass_token, provider_pass_id)
   values (
@@ -362,11 +362,11 @@ begin
   )
   on conflict (customer_id, venue_id, pass_type) do nothing;
 
-  select pass_token into v_wallet_token
-  from public.passes
-  where customer_id = v_customer_id
-    and venue_id = p_venue_id
-    and pass_type = 'unissued'
+  select p.pass_token into v_wallet_token
+  from public.passes p
+  where p.customer_id = v_customer_id
+    and p.venue_id = p_venue_id
+    and p.pass_type = 'unissued'
   limit 1;
 
   return query
@@ -407,10 +407,10 @@ declare
   v_customer_id uuid;
   v_membership_status text;
 begin
-  select customer_id into v_customer_id
-  from public.passes
-  where pass_token = p_pass_token
-    and venue_id = p_venue_id
+  select p.customer_id into v_customer_id
+  from public.passes p
+  where p.pass_token = p_pass_token
+    and p.venue_id = p_venue_id
   limit 1;
 
   if v_customer_id is null then
@@ -423,10 +423,10 @@ begin
 
   v_membership_status := public.loyalty_current_membership_status(v_customer_id, p_venue_id);
 
-  update public.customer_venues
+  update public.customer_venues cv
   set membership_status = v_membership_status
-  where customer_id = v_customer_id
-    and venue_id = p_venue_id;
+  where cv.customer_id = v_customer_id
+    and cv.venue_id = p_venue_id;
 
   return query
   select
@@ -469,10 +469,10 @@ begin
 
   v_membership_status := public.loyalty_current_membership_status(p_customer_id, p_venue_id);
 
-  update public.customer_venues
+  update public.customer_venues cv
   set membership_status = v_membership_status
-  where customer_id = p_customer_id
-    and venue_id = p_venue_id;
+  where cv.customer_id = p_customer_id
+    and cv.venue_id = p_venue_id;
 
   return query
   select

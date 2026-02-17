@@ -1,9 +1,38 @@
 project_id = "sessions-loyalty-program"
 
-[functions]
-enabled = true
-verify_jwt = false
-
 [db]
 shadow_port = 54320
 major_version = 15
+
+[functions.resolve-customer-from-pass-token]
+verify_jwt = false
+
+[functions.upsert-customer-by-phone]
+verify_jwt = false
+
+[functions.attach-customer-to-cart-session]
+verify_jwt = false
+
+[functions.get-balance]
+verify_jwt = false
+
+[functions.apply-reward-to-cart]
+verify_jwt = false
+
+[functions.earn-points-from-paid-order]
+verify_jwt = false
+
+[functions.redeem-reward-after-payment]
+verify_jwt = false
+
+[functions.membership-checkout-create-session]
+verify_jwt = false
+
+[functions.stripe-webhook-handler]
+verify_jwt = false
+
+[functions.monthly-reward-grant-job]
+verify_jwt = false
+
+[functions.process-pass-update-jobs]
+verify_jwt = false

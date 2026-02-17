@@ -81,3 +81,20 @@ npm run test:contract
 ## Utility Scripts
 - `scripts/poll-paid-orders.js`: fallback paid-order polling worker.
 - `scripts/generate-membership-link.js`: creates signed `/membership` links.
+- `scripts/deploy-supabase-mvp.sh`: one-shot Supabase deploy (schema + secrets + all functions).
+- `scripts/smoke-test.sh`: quick end-to-end HTTP smoke test.
+
+### Fastest Deploy (CLI)
+```bash
+export SUPABASE_PROJECT_REF="your-project-ref"
+export SUPABASE_URL="https://${SUPABASE_PROJECT_REF}.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+export INTERNAL_API_KEY="change-me-internal"
+export KIOSK_SHARED_SECRET="change-me-kiosk"
+./scripts/deploy-supabase-mvp.sh
+```
+
+If Docker is not running and `supabase db push` fails, apply the migration in Supabase SQL Editor first, then run:
+```bash
+SKIP_DB_PUSH=1 ./scripts/deploy-supabase-mvp.sh
+```
