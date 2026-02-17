@@ -83,6 +83,8 @@ npm run test:contract
 - `scripts/generate-membership-link.js`: creates signed `/membership` links.
 - `scripts/deploy-supabase-mvp.sh`: one-shot Supabase deploy (schema + secrets + all functions).
 - `scripts/smoke-test.sh`: quick end-to-end HTTP smoke test.
+- `scripts/idempotency-test.sh`: earn/redeem idempotency test (duplicate payment event replay).
+- `scripts/membership-smoke.sh`: membership checkout/link smoke test.
 
 ### Fastest Deploy (CLI)
 ```bash
@@ -97,4 +99,39 @@ export KIOSK_SHARED_SECRET="change-me-kiosk"
 If Docker is not running and `supabase db push` fails, apply the migration in Supabase SQL Editor first, then run:
 ```bash
 SKIP_DB_PUSH=1 ./scripts/deploy-supabase-mvp.sh
+```
+
+### Runtime Hotfix Consolidation
+If you applied SQL hotfixes manually, apply this consolidation migration in Supabase SQL Editor:
+- `supabase/migrations/202602170004_consolidate_runtime_fixes.sql`
+
+### Idempotency Test
+```bash
+export LOYALTY_BASE_URL="https://sessions-loyalty-program-x1pp.vercel.app"
+export KIOSK_SHARED_SECRET="change-me-kiosk"
+export CUSTOMER_ID="c4eaaa39-622a-428c-87f1-0534a42ad1ff"
+./scripts/idempotency-test.sh
+```
+
+### Membership Test (Stripe Test Mode)
+Set required env vars in Supabase + Vercel:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_MEMBERSHIP_PRICE_ID`
+- `MEMBERSHIP_SUCCESS_URL`
+- `MEMBERSHIP_CANCEL_URL`
+
+Smoke test:
+```bash
+export LOYALTY_BASE_URL="https://sessions-loyalty-program-x1pp.vercel.app"
+export CUSTOMER_ID="c4eaaa39-622a-428c-87f1-0534a42ad1ff"
+export INTERNAL_API_KEY="change-me-internal"
+./scripts/membership-smoke.sh
+```
+
+Webhook test with Stripe CLI (optional):
+```bash
+stripe listen --forward-to https://sessions-loyalty-program-x1pp.vercel.app/loyalty/stripe-webhook
+stripe trigger checkout.session.completed
+stripe trigger invoice.paid
 ```

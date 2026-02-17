@@ -732,6 +732,7 @@ declare
   v_earn_key text := format('earn:%s:%s', p_order_id, p_payment_event_id);
   v_convert_points_key text := format('earn-convert-points:%s:%s', p_order_id, p_payment_event_id);
   v_convert_reward_key text := format('earn-convert-rewards:%s:%s', p_order_id, p_payment_event_id);
+  v_rows_updated integer := 0;
 begin
   select pl.customer_id, pl.points_delta
     into v_customer_id, v_points_earned
@@ -776,14 +777,27 @@ begin
   end if;
 
   if v_customer_id is null then
-    insert into public.order_links (order_id, cart_session_id, venue_id, status)
-    values (p_order_id, p_cart_session_id, p_venue_id, 'paid_no_customer')
-    on conflict (order_id, venue_id)
-      where order_id is not null
-    do update
-      set status = excluded.status,
-          cart_session_id = coalesce(excluded.cart_session_id, public.order_links.cart_session_id),
-          updated_at = now();
+    if p_cart_session_id is not null then
+      update public.order_links ol
+      set order_id = coalesce(ol.order_id, p_order_id),
+          status = 'paid_no_customer',
+          updated_at = now()
+      where ol.cart_session_id = p_cart_session_id
+        and ol.venue_id = p_venue_id;
+
+      get diagnostics v_rows_updated = row_count;
+    end if;
+
+    if v_rows_updated = 0 then
+      insert into public.order_links (order_id, cart_session_id, venue_id, status)
+      values (p_order_id, p_cart_session_id, p_venue_id, 'paid_no_customer')
+      on conflict (order_id, venue_id)
+        where order_id is not null
+      do update
+        set status = excluded.status,
+            cart_session_id = coalesce(excluded.cart_session_id, public.order_links.cart_session_id),
+            updated_at = now();
+    end if;
 
     return query
     select null::uuid, 0, 0, 0, 0;
@@ -880,28 +894,43 @@ begin
   where cv.customer_id = v_customer_id
     and cv.venue_id = p_venue_id;
 
-  insert into public.order_links (
-    order_id,
-    cart_session_id,
-    customer_id,
-    venue_id,
-    status
-  )
-  values (
-    p_order_id,
-    p_cart_session_id,
-    v_customer_id,
-    p_venue_id,
-    'paid_earned'
-  )
-  on conflict (order_id, venue_id)
-    where order_id is not null
-  do update
-    set
-      customer_id = coalesce(excluded.customer_id, public.order_links.customer_id),
-      cart_session_id = coalesce(excluded.cart_session_id, public.order_links.cart_session_id),
-      status = excluded.status,
-      updated_at = now();
+  v_rows_updated := 0;
+  if p_cart_session_id is not null then
+    update public.order_links ol
+    set order_id = coalesce(ol.order_id, p_order_id),
+        customer_id = coalesce(ol.customer_id, v_customer_id),
+        status = 'paid_earned',
+        updated_at = now()
+    where ol.cart_session_id = p_cart_session_id
+      and ol.venue_id = p_venue_id;
+
+    get diagnostics v_rows_updated = row_count;
+  end if;
+
+  if v_rows_updated = 0 then
+    insert into public.order_links (
+      order_id,
+      cart_session_id,
+      customer_id,
+      venue_id,
+      status
+    )
+    values (
+      p_order_id,
+      p_cart_session_id,
+      v_customer_id,
+      p_venue_id,
+      'paid_earned'
+    )
+    on conflict (order_id, venue_id)
+      where order_id is not null
+    do update
+      set
+        customer_id = coalesce(excluded.customer_id, public.order_links.customer_id),
+        cart_session_id = coalesce(excluded.cart_session_id, public.order_links.cart_session_id),
+        status = excluded.status,
+        updated_at = now();
+  end if;
 
   return query
   select v_customer_id, v_points_earned, v_rewards_converted, v_points_balance, v_rewards_balance;
