@@ -1,4 +1,4 @@
-import { supabaseRest } from "../../lib/server/supabase-rest.js";
+import { supabaseRest } from "../lib/server/supabase-rest.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -43,8 +43,8 @@ export default async function handler(req, res) {
     const balance = balances?.[0] ?? { points_balance: 0, rewards_balance: 0, membership_status: "none" };
     const globalRewardBalance = Number(globalBalances?.[0]?.rewards_balance ?? 0);
     const totalRewards = Number(balance.rewards_balance ?? 0) + globalRewardBalance;
-    const appleLink = `/api/wallet/apple/${encodeURIComponent(token)}`;
-    const googleLink = `/api/wallet/google/${encodeURIComponent(token)}`;
+    const appleLink = `/wallet/apple/${encodeURIComponent(token)}`;
+    const googleLink = `/wallet/google/${encodeURIComponent(token)}`;
 
     return htmlResponse(
       res,

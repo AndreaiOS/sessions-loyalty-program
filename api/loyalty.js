@@ -1,4 +1,4 @@
-import { proxyToEdge } from "../../lib/server/edge-proxy.js";
+import { proxyToEdge } from "../lib/server/edge-proxy.js";
 
 const routeMap = {
   "resolve-customer-from-pass-token": "resolve-customer-from-pass-token",

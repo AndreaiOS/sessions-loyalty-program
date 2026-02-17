@@ -1,8 +1,11 @@
 {
   "rewrites": [
-    { "source": "/wallet/:token", "destination": "/api/wallet/:token" },
+    { "source": "/", "destination": "/api/index" },
+    { "source": "/wallet/:token", "destination": "/api/wallet?token=:token" },
+    { "source": "/wallet/apple/:token", "destination": "/api/wallet-apple?token=:token" },
+    { "source": "/wallet/google/:token", "destination": "/api/wallet-google?token=:token" },
     { "source": "/admin", "destination": "/api/admin" },
     { "source": "/membership", "destination": "/api/membership" },
-    { "source": "/loyalty/:path*", "destination": "/api/loyalty/:path*" }
+    { "source": "/loyalty/:path*", "destination": "/api/loyalty?path=:path*" }
   ]
 }
